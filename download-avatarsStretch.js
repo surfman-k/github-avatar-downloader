@@ -1,17 +1,16 @@
-require('dotenv').config();
 var request = require('request');
 var token = require('./secrets');
+var dotenv = require('dotenv');
 var fs = require('fs');
 var input = process.argv.slice(2);
 
 console.log('Welcome to the GitHub Avatar Downloader!');
+
 function getRepoContributors(repoOwner, repoName, cb) {
 
 //Checks if arguments were given by user
-  if(input.length !== 2){
-    console.log("Please enter a Repo owner and a Repo name!");
-    return;
-  }
+  if(!repoOwner || !repoName)
+    console.log("Please enter both an owner and a name!");
 
 //API request options. Keeps Github Token secret by using module
   var options = {
@@ -22,14 +21,6 @@ function getRepoContributors(repoOwner, repoName, cb) {
     }
   };
 
-//Verifies that Repo Owner and Name exist
-  request(options).on('response', function (response) {                           
-         if(response.statusCode !== 200){
-          console.log(response.statusMessage);
-          console.log("Repo or Owner does not exist");
-        }
-       });
-
 //Requests data from api and parses it
   request(options, function(err, res, body) {
     cb(err, JSON.parse(body));
@@ -39,14 +30,11 @@ function getRepoContributors(repoOwner, repoName, cb) {
 //Function that will download picture from avatar url and put it into the specified filepath
 function downloadImageByURL(url, filePath) {
   request.get(url).pipe(fs.createWriteStream(filePath));
-  if(filePath.slice(0,10) !== "./avatars/"){
-    console.log("Please make sure you have an 'avatars' folder in your current directory!");
-  }
 }
 
 //Callback function that takes each contributor and finds their avatar url and login info
 function callback(err, result){
-  console.log("Errors:", err);
+   console.log("Errors:", err);
     for(var i = 0; i < result.length; i++){
       downloadImageByURL(result[i].avatar_url, ("./avatars/" + result[i].login + ".jpg"));
     }
